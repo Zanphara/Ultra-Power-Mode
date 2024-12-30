@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="UltraPowerMode.ca3afa15-be91-4172-b019-5965f4c4d653" Version="1.0" Language="en-US" Publisher="Company" />
+    <Identity Id="UltraPowerMode.e48c8c92-2195-4ed8-9dc2-619228dbdd66" Version="1.0" Language="en-US" Publisher="Joshua Haydon-Guppy" />
     <DisplayName>UltraPowerMode</DisplayName>
     <Description>Empty VSIX Project.</Description>
   </Metadata>
@@ -18,5 +18,6 @@
   </Prerequisites>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
   </Assets>
 </PackageManifest>
