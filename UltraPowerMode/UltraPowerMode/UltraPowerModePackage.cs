@@ -30,7 +30,7 @@ namespace UltraPowerMode
         /// <summary>
         /// UltraPowerModePackage GUID string.
         /// </summary>
-        public const string PackageGuidString = "b3652b91-a76c-48f2-a9e2-5492e8cad0ef";
+        public const string PackageGuidString = "ad19a55e-664e-4835-bc31-213168640530";
 
         #region Package Members
 
