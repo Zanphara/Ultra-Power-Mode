@@ -11,5 +11,7 @@ namespace UltraPowerMode.Adornments
         void OnTextBufferChanged(IAdornmentLayer adornmentLayer, IWpfTextView view, TextContentChangedEventArgs e);
 
         void Cleanup(IAdornmentLayer adornmentLayer, IWpfTextView view);
+
+        void CaretPositionChanged(IAdornmentLayer layer, IWpfTextView view, CaretPositionChangedEventArgs e);
     }
 }

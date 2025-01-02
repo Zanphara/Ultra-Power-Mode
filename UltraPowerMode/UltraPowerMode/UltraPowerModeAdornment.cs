@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using System;
+using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -9,9 +10,6 @@ using UltraPowerMode.Adornments;
 
 namespace UltraPowerMode
 {
-    /// <summary>
-    /// UltraPowerModeAdornment places red boxes behind all the "a"s in the editor window
-    /// </summary>
     internal sealed class UltraPowerModeAdornment
     {
         private readonly IAdornmentLayer layer;
@@ -46,10 +44,17 @@ namespace UltraPowerMode
             //Todo//
             // add in the seettings
 
-            this.view.LayoutChanged += this.OnLayoutChanged;
+            this.view.LayoutChanged += OnLayoutChanged;
             this.view.ViewportHeightChanged += View_ViewportSizeChanged;
             this.view.ViewportWidthChanged += View_ViewportSizeChanged;
             this.view.TextBuffer.Changed += TextBuffer_Changed;
+            this.view.Caret.PositionChanged += Caret_PositionChanged;
+
+        }
+
+        private void Caret_PositionChanged(object sender, CaretPositionChangedEventArgs e)
+        {
+            highlightAdornment.CaretPositionChanged(layer, view, e);
         }
 
         private void View_ViewportSizeChanged(object sender, EventArgs e)
