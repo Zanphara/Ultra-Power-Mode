@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using EnvDTE;
+using Microsoft.Build.Framework.XamlTypes;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using System;
@@ -47,9 +49,19 @@ namespace UltraPowerMode
             this.view.LayoutChanged += OnLayoutChanged;
             this.view.ViewportHeightChanged += View_ViewportSizeChanged;
             this.view.ViewportWidthChanged += View_ViewportSizeChanged;
-            this.view.TextBuffer.Changed += TextBuffer_Changed;
+            this.view.TextBuffer.PostChanged += TextBuffer_PostChanged;
             this.view.Caret.PositionChanged += Caret_PositionChanged;
+            this.view.Closed += View_Closed;
+        }
 
+        private void View_Closed(object sender, EventArgs e)
+        {
+            highlightAdornment.Cleanup(layer, view);
+        }
+
+        private void TextBuffer_PostChanged(object sender, EventArgs e)
+        {
+            highlightAdornment.TextBufferPostChanged(layer, view, e);
         }
 
         private void Caret_PositionChanged(object sender, CaretPositionChangedEventArgs e)
@@ -57,31 +69,19 @@ namespace UltraPowerMode
             highlightAdornment.CaretPositionChanged(layer, view, e);
         }
 
+        ///
         private void View_ViewportSizeChanged(object sender, EventArgs e)
         {
             //throw new NotImplementedException();
         }
 
-        private void TextBuffer_Changed(object sender, TextContentChangedEventArgs e)
-        {
-            highlightAdornment.OnTextBufferChanged(layer, view, e);
-        }
-
-        /// <summary>
-        /// Handles whenever the text displayed in the view changes by adding the adornment to any reformatted lines
-        /// </summary>
-        /// <remarks><para>This event is raised whenever the rendered text displayed in the <see cref="ITextView"/> changes.</para>
-        /// <para>It is raised whenever the view does a layout (which happens when DisplayTextLineContainingBufferPosition is called or in response to text or classification changes).</para>
-        /// <para>It is also raised whenever the view scrolls horizontally or when its size changes.</para>
-        /// </remarks>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event arguments.</param>
         internal void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
-            if(view.IsClosed)
+            if (view.IsClosed)
             {
                 screenShakeAdornment.Cleanup(layer, view);
                 particlesAdornment.Cleanup(layer, view);
+                highlightAdornment.Cleanup(layer, view);
             }
         }
 

@@ -29,5 +29,10 @@ namespace UltraPowerMode.Adornments
         {
             throw new NotImplementedException();
         }
+
+        public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

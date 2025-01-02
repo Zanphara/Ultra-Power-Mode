@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
+using System;
 
 
 namespace UltraPowerMode.Adornments
@@ -13,5 +14,6 @@ namespace UltraPowerMode.Adornments
         void Cleanup(IAdornmentLayer adornmentLayer, IWpfTextView view);
 
         void CaretPositionChanged(IAdornmentLayer layer, IWpfTextView view, CaretPositionChangedEventArgs e);
+        void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e);
     }
 }
