@@ -10,6 +10,11 @@ namespace UltraPowerMode.Adornments
 {
     internal class ScreenShakeAdornment : IAdornment
     {
+        public void CaretPositionChanged(IAdornmentLayer layer, IWpfTextView view, CaretPositionChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Cleanup(IAdornmentLayer adornmentLayer, IWpfTextView view)
         {
             throw new NotImplementedException();
