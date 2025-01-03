@@ -10,8 +10,15 @@ using System.Windows.Shapes;
 namespace UltraPowerMode.Adornments
 {
     //TODO//
-    //when there is nothing on a line pressin enter messes up the highligh position
-    //pasting in a specific way casues the code to run twice and the highlight to be put in the wrong place
+    // make it so that the character moves fluidly with the caret
+    //  fluidly means that it doesnt teleport from one pos to annother
+    //  it means the box should streach and shrink as the caret moves
+    //  and flow to whereever the caret is
+    // idea:
+    //  store the current position of the highlight 
+    //  once a method is called to say it needs to move calculate the 
+    //  travel line between the current position and the new position and
+    //  fluidly move the highlight
 
     internal class HighlightAdornment : IAdornment
     {
@@ -76,16 +83,17 @@ namespace UltraPowerMode.Adornments
             }
         }
 
-        private void CreateVisuals(IAdornmentLayer adornmentLayer, IWpfTextView view)
+        public void CreateVisuals(IAdornmentLayer adornmentLayer, IWpfTextView view)
         {
-            // Add the adornment to the layer with a valid SnapshotSpan
-            adornmentLayer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, highlightRectangle, null);
-
-            // Now update the visuals after adding the adornment
-            UpdateVisuals(adornmentLayer, view);
+            // Add the adornment to the layer only if it doenst already exist
+            if (!adornmentLayer.Elements.Any(adornment => adornment.Adornment == highlightRectangle))
+            {
+                adornmentLayer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, highlightRectangle, null);
+            }
+            UpdateVisuals(adornmentLayer, view); // Update the visuals when caret position changes
         }
 
-        private void UpdateVisuals(IAdornmentLayer adornmentLayer, IWpfTextView view, int exactposition = -1)
+        public void UpdateVisuals(IAdornmentLayer layer, IWpfTextView view)
         {
             // Update the rectangle size and position
             highlightRectangle.Width = 8;

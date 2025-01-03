@@ -50,8 +50,14 @@ namespace UltraPowerMode
             this.view.ViewportHeightChanged += View_ViewportSizeChanged;
             this.view.ViewportWidthChanged += View_ViewportSizeChanged;
             this.view.TextBuffer.PostChanged += TextBuffer_PostChanged;
+            this.view.TextBuffer.Changed += TextBuffer_Changed;
             this.view.Caret.PositionChanged += Caret_PositionChanged;
             this.view.Closed += View_Closed;
+        }
+
+        private void TextBuffer_Changed(object sender, TextContentChangedEventArgs e)
+        {
+            particlesAdornment.OnTextBufferChanged(layer, view, e);
         }
 
         private void View_Closed(object sender, EventArgs e)
@@ -69,7 +75,6 @@ namespace UltraPowerMode
             highlightAdornment.CaretPositionChanged(layer, view, e);
         }
 
-        ///
         private void View_ViewportSizeChanged(object sender, EventArgs e)
         {
             //throw new NotImplementedException();

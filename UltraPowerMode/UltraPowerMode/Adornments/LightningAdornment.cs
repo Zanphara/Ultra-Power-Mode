@@ -20,6 +20,11 @@ namespace UltraPowerMode.Adornments
             throw new NotImplementedException();
         }
 
+        public void CreateVisuals(IAdornmentLayer layer, IWpfTextView view)
+        {
+            throw new NotImplementedException();
+        }
+
         public void OnSizeChanged(IAdornmentLayer adornmentLayer, IWpfTextView view, int streakCount, bool backgroundColorChanged = false)
         {
             throw new NotImplementedException();
@@ -31,6 +36,11 @@ namespace UltraPowerMode.Adornments
         }
 
         public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateVisuals(IAdornmentLayer layer, IWpfTextView view)
         {
             throw new NotImplementedException();
         }

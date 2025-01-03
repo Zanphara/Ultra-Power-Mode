@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace UltraPowerMode.Adornments
 {
+
     internal class ScreenShakeAdornment : IAdornment
     {
         public void CaretPositionChanged(IAdornmentLayer layer, IWpfTextView view, CaretPositionChangedEventArgs e)
@@ -16,6 +17,11 @@ namespace UltraPowerMode.Adornments
         }
 
         public void Cleanup(IAdornmentLayer adornmentLayer, IWpfTextView view)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CreateVisuals(IAdornmentLayer layer, IWpfTextView view)
         {
             throw new NotImplementedException();
         }
@@ -30,6 +36,11 @@ namespace UltraPowerMode.Adornments
         }
 
         public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateVisuals(IAdornmentLayer layer, IWpfTextView view)
         {
             throw new NotImplementedException();
         }
