@@ -1,8 +1,11 @@
 ﻿using Microsoft.VisualStudio.GraphModel.CodeSchema;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows;
@@ -26,7 +29,6 @@ namespace UltraPowerMode.Adornments
     // while hold ctrl create red and blue particls spewing out the top and bottom of the highlight 
     // and when a large deletion or adition the particles spew out of the correct color over the area which was affected
     // the particles originate from where the caret originaly was
-
     internal class ParticlesAdornment : IAdornment
     {
         private readonly List<Image> particlesList;
@@ -50,31 +52,51 @@ namespace UltraPowerMode.Adornments
         {
             var particles = new Image();
             particles.UpdateSource(GetParticleBitmap());
+            particles.Opacity = 1.0;
 
             layer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, particles, null);
-
-            particlesList.Add(particles);
 
             var left = target.X;
             var top = target.Y;
 
             double startAlpha = 1.0;
-            double endAlpha = 0.0;
-            double alphaDecrements = 0.1;
+            //double endAlpha = 0.0;
+            double alphaDecrements = 0.025;
             double frameInterval = 17.0;
 
-            Duration duration = CalculateDuration(startAlpha, alphaDecrements, frameInterval);
-            particles.BeginAnimation(Canvas.LeftProperty, GetAnimation(spawnLocation.X, left, duration));
-            particles.BeginAnimation(Canvas.TopProperty, GetAnimation(spawnLocation.Y, top, duration));
+            EasingFunctionBase easingFunction = new ExponentialEase()
+            {
+                EasingMode = EasingMode.EaseOut,
+                Exponent = 2
+            };
 
-            var opacityAnimation = GetAnimation(startAlpha, endAlpha, duration);
-            opacityAnimation.Completed += (sender, args) =>
+            Duration duration = CalculateDuration(startAlpha, alphaDecrements, frameInterval);
+            particles.BeginAnimation(Canvas.LeftProperty, GetAnimation(spawnLocation.X, left, duration, easingFunction));
+            particles.BeginAnimation(Canvas.TopProperty, GetAnimation(spawnLocation.Y, top, duration, easingFunction));
+
+            double initialSize = 3;
+            double finalSize = 0;
+
+            var sizeAnimation = GetAnimation(initialSize, finalSize, duration);
+            particles.BeginAnimation(Image.WidthProperty, sizeAnimation);
+            particles.BeginAnimation(Image.HeightProperty, sizeAnimation);
+
+            sizeAnimation.Completed += (sender, args) =>
             {
                 particles.Visibility = Visibility.Hidden;
                 layer.RemoveAdornment(particles);
                 particlesList.Remove(particles);
             };
-            particles.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
+
+
+            //var opacityAnimation = GetAnimation(startAlpha, endAlpha, duration);
+            //opacityAnimation.Completed += (sender, args) =>
+            //{
+            //    particles.Visibility = Visibility.Hidden;
+            //    layer.RemoveAdornment(particles);
+            //    particlesList.Remove(particles);
+            //};
+            //particles.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
         }
 
         private Duration CalculateDuration(double initialValue, double decrementPerInterval, double intervalMilliseconds = 17)
@@ -92,18 +114,32 @@ namespace UltraPowerMode.Adornments
             };
         }
 
+        private DoubleAnimation GetAnimation(double start, double end, Duration duration, EasingFunctionBase easingFunction)
+        {
+            return new DoubleAnimation()
+            {
+                From = start,
+                To = end,
+                Duration = duration,
+                EasingFunction = easingFunction
+
+            };
+        }
+
+
         private Bitmap GetParticleBitmap()
         {
-            var color = Colors.Blue;            //TODO
-            var size = 5;                       //TODO
+            var color = Color.FromArgb(255, 56, 252, 253);
+            var size = 3;                       
             var bitmap = new Bitmap(size, size);
+
             using (var g = Graphics.FromImage(bitmap))
             {
                 g.FillRectangle(
-                    new SolidBrush(Color.FromArgb((int)(255),
-                    color.R, color.G, color.B)),
-                    0, 0,
-                    size, size);
+                    new SolidBrush(Color.FromArgb(
+                        color.A, color.R, color.G, color.B)),
+                        0, 0,
+                        size, size);
             }
             return bitmap;
         }
@@ -116,28 +152,43 @@ namespace UltraPowerMode.Adornments
 
         public void OnTextBufferChanged(IAdornmentLayer layer, IWpfTextView view, TextContentChangedEventArgs e)
         {
+
+        }
+
+        public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
+        {
             var spawnedAmount = 10;
 
             Random random = new Random();
 
             for (int i = 0; i < spawnedAmount; i++)
             {
-                Point caretPosition = new Point(view.Caret.Left + (8 / 2) - (5 / 2), view.Caret.Top + (view.Caret.Height / 2) - (5 / 2));
+
+                // Generate random offsets
+                int targetXOffset = random.Next(-8, 8);
+                int targetYOffset = random.Next(-6, 6);
+
+                Point target = new Point
+                (
+                    view.Caret.Left + targetXOffset + (8 / 2) - (3 / 2), 
+                    view.Caret.Top  + targetYOffset + (view.Caret.Height / 2) - (3 / 2)
+                );
 
 
                 // Generate random offsets
-                int randomXOffset = random.Next(-8, 8);
-                int randomYOffset = random.Next(-10, 10);
+                int spawnXOffset = random.Next(-6, 6);
+                int spawnYOffset = random.Next(-6, 6);
 
-                Point spawnLocation = new Point(caretPosition.X + randomXOffset, caretPosition.Y + randomYOffset);
 
-                CreateVisuals(layer, view, caretPosition, spawnLocation);
+
+                Point spawnLocation = new Point
+                (
+                    target.X + spawnXOffset, 
+                    target.Y + spawnYOffset
+                );
+
+                CreateVisuals(layer, view, target, spawnLocation);
             }
-        }
-
-        public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         public void UpdateVisuals(IAdornmentLayer layer, IWpfTextView view)

@@ -57,7 +57,6 @@ namespace UltraPowerMode
 
         private void TextBuffer_Changed(object sender, TextContentChangedEventArgs e)
         {
-            particlesAdornment.OnTextBufferChanged(layer, view, e);
         }
 
         private void View_Closed(object sender, EventArgs e)
@@ -68,6 +67,7 @@ namespace UltraPowerMode
         private void TextBuffer_PostChanged(object sender, EventArgs e)
         {
             highlightAdornment.TextBufferPostChanged(layer, view, e);
+            particlesAdornment.TextBufferPostChanged(layer, view, e);
         }
 
         private void Caret_PositionChanged(object sender, CaretPositionChangedEventArgs e)
@@ -88,6 +88,7 @@ namespace UltraPowerMode
                 particlesAdornment.Cleanup(layer, view);
                 highlightAdornment.Cleanup(layer, view);
             }
+            //add highllight update as when the user crossled the highlight bugs out
         }
 
     }
