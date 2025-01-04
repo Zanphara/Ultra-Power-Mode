@@ -1,17 +1,12 @@
-﻿using Microsoft.VisualStudio.GraphModel.CodeSchema;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
+using UltraPowerMode.Enums;
 using UltraPowerMode.Utils;
 using Color = System.Drawing.Color;
 using Image = System.Windows.Controls.Image;
@@ -32,9 +27,14 @@ namespace UltraPowerMode.Adornments
     internal class ParticlesAdornment : IAdornment
     {
         private readonly List<Image> particlesList;
+        private EditTag _editTag;
+        private Color _color;
+        private float _particleSize;
 
         public ParticlesAdornment()
         {
+            _color = Color.FromArgb(155, 56, 252, 253);
+            _particleSize = 100;
             particlesList = new List<Image>();
         }
 
@@ -51,28 +51,25 @@ namespace UltraPowerMode.Adornments
         public void CreateVisuals(IAdornmentLayer layer, IWpfTextView view, Point target, Point spawnLocation)
         {
             var particles = new Image();
-            particles.UpdateSource(GetParticleBitmap());
+
+            particles.UpdateSource(GetParticleBitmap(_color, _particleSize));
             particles.Opacity = 1.0;
 
             layer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, particles, null);
 
-            var left = target.X;
-            var top = target.Y;
-
             double startAlpha = 1.0;
-            //double endAlpha = 0.0;
             double alphaDecrements = 0.025;
             double frameInterval = 17.0;
 
             EasingFunctionBase easingFunction = new ExponentialEase()
             {
                 EasingMode = EasingMode.EaseOut,
-                Exponent = 2
+                Exponent = 4
             };
 
             Duration duration = CalculateDuration(startAlpha, alphaDecrements, frameInterval);
-            particles.BeginAnimation(Canvas.LeftProperty, GetAnimation(spawnLocation.X, left, duration, easingFunction));
-            particles.BeginAnimation(Canvas.TopProperty, GetAnimation(spawnLocation.Y, top, duration, easingFunction));
+            particles.BeginAnimation(Canvas.LeftProperty, GetAnimation(spawnLocation.X, target.X, duration, easingFunction));
+            particles.BeginAnimation(Canvas.TopProperty, GetAnimation(spawnLocation.Y, target.Y, duration, easingFunction));
 
             double initialSize = 3;
             double finalSize = 0;
@@ -87,21 +84,11 @@ namespace UltraPowerMode.Adornments
                 layer.RemoveAdornment(particles);
                 particlesList.Remove(particles);
             };
-
-
-            //var opacityAnimation = GetAnimation(startAlpha, endAlpha, duration);
-            //opacityAnimation.Completed += (sender, args) =>
-            //{
-            //    particles.Visibility = Visibility.Hidden;
-            //    layer.RemoveAdornment(particles);
-            //    particlesList.Remove(particles);
-            //};
-            //particles.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
         }
 
         private Duration CalculateDuration(double initialValue, double decrementPerInterval, double intervalMilliseconds = 17)
         {
-            return  TimeSpan.FromMilliseconds(intervalMilliseconds * (initialValue / decrementPerInterval));
+            return TimeSpan.FromMilliseconds(intervalMilliseconds * (initialValue / decrementPerInterval));
         }
 
         private DoubleAnimation GetAnimation(double start, double end, Duration duration)
@@ -127,20 +114,21 @@ namespace UltraPowerMode.Adornments
         }
 
 
-        private Bitmap GetParticleBitmap()
+        private Bitmap GetParticleBitmap(Color color, float size)
         {
-            var color = Color.FromArgb(255, 56, 252, 253);
-            var size = 3;                       
-            var bitmap = new Bitmap(size, size);
+            Color particleColor = color;
+            float particleSize = size;
+            Bitmap bitmap = new Bitmap(100, 100);
 
-            using (var g = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
                 g.FillRectangle(
                     new SolidBrush(Color.FromArgb(
-                        color.A, color.R, color.G, color.B)),
+                        particleColor.A, particleColor.R, particleColor.G, particleColor.B)),
                         0, 0,
-                        size, size);
+                        particleSize, particleSize);
             }
+
             return bitmap;
         }
 
@@ -152,7 +140,18 @@ namespace UltraPowerMode.Adornments
 
         public void OnTextBufferChanged(IAdornmentLayer layer, IWpfTextView view, TextContentChangedEventArgs e)
         {
+            _particleSize = 100;
 
+            if (e.EditTag == null)
+            {
+                _editTag = EditTag.Delete;
+                _color = Color.FromArgb(255, 255, 252, 82);
+            }
+            else
+            {
+                _editTag = EditTag.Insert;
+                _color = Color.FromArgb(255, 56, 252, 253);
+            }
         }
 
         public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
@@ -160,34 +159,54 @@ namespace UltraPowerMode.Adornments
             var spawnedAmount = 10;
 
             Random random = new Random();
+            Point target = new Point();
+            Point spawnLocation = new Point();
+
+            var offsetX = (8 / 2) - (3 / 2);
+            var offsetY = (view.Caret.Height / 2) - (3 / 2);
+
 
             for (int i = 0; i < spawnedAmount; i++)
             {
-
-                // Generate random offsets
-                int targetXOffset = random.Next(-8, 8);
-                int targetYOffset = random.Next(-6, 6);
-
-                Point target = new Point
-                (
-                    view.Caret.Left + targetXOffset + (8 / 2) - (3 / 2), 
-                    view.Caret.Top  + targetYOffset + (view.Caret.Height / 2) - (3 / 2)
-                );
+                // (Visuals) need a more robust method of picking s random spawn and target
+                // (Performance) need to add in storyboards so that these get done togerther and not one at a time
 
 
-                // Generate random offsets
-                int spawnXOffset = random.Next(-6, 6);
-                int spawnYOffset = random.Next(-6, 6);
+                if (_editTag == EditTag.Insert)
+                {
+                    target = new Point
+                    (
+                        view.Caret.Left + offsetX + random.Next(-8, 10) ,
+                        view.Caret.Top  + offsetY + random.Next(-6, 6)
+                    );
+
+                    spawnLocation = new Point
+                    (
+                        view.Caret.Left + offsetX + random.Next(-6, 6),
+                        view.Caret.Top  + offsetY + random.Next(-6, 6)
+                    );
+
+                    CreateVisuals(layer, view, target, spawnLocation);
+                }
+                else if (_editTag == EditTag.Delete)
+                {
+                    target = new Point
+                    (
+                        view.Caret.Left + offsetX + random.Next(0, 16), // (WIP) needs to not move in the direction the caret is moving
+                        view.Caret.Top + offsetY + random.Next(-6, 6)
+                    );
+
+                    spawnLocation = new Point
+                    (
+                        view.Caret.Left + offsetX,
+                        view.Caret.Top + offsetY
+                    );
+
+                    CreateVisuals(layer, view, target, spawnLocation);
+                }
 
 
 
-                Point spawnLocation = new Point
-                (
-                    target.X + spawnXOffset, 
-                    target.Y + spawnYOffset
-                );
-
-                CreateVisuals(layer, view, target, spawnLocation);
             }
         }
 
