@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
-using System.Windows;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Media;
