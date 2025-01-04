@@ -12,13 +12,11 @@ using UltraPowerMode.Adornments;
 
 namespace UltraPowerMode
 {
-    internal sealed class UltraPowerModeAdornment
+    internal sealed class BelowTextAdorner
     {
         private readonly IAdornmentLayer layer;
 
         private readonly IAdornment screenShakeAdornment;
-        private readonly IAdornment lightningAdornment;
-        private readonly IAdornment particlesAdornment;
         private readonly IAdornment highlightAdornment;
 
 
@@ -27,20 +25,18 @@ namespace UltraPowerMode
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UltraPowerModeAdornment"/> class.
+        /// Initializes a new instance of the <see cref="BelowTextAdorner"/> class.
         /// </summary>
         /// <param name="view">Text view to create the adornment for</param>
-        public UltraPowerModeAdornment(IWpfTextView view)
+        public BelowTextAdorner(IWpfTextView view)
         {
             if (view == null) {throw new ArgumentNullException("view");}
 
-            this.layer = view.GetAdornmentLayer("UltraPowerModeAdornment");
+            this.layer = view.GetAdornmentLayer("BelowTextAdorner");
 
             this.view = view;
 
             screenShakeAdornment = new ScreenShakeAdornment();
-            particlesAdornment = new ParticlesAdornment();
-            lightningAdornment = new LightningAdornment();
             highlightAdornment = new HighlightAdornment();
 
             //Todo//
@@ -67,7 +63,6 @@ namespace UltraPowerMode
         private void TextBuffer_PostChanged(object sender, EventArgs e)
         {
             highlightAdornment.TextBufferPostChanged(layer, view, e);
-            particlesAdornment.TextBufferPostChanged(layer, view, e);
         }
 
         private void Caret_PositionChanged(object sender, CaretPositionChangedEventArgs e)
@@ -85,10 +80,9 @@ namespace UltraPowerMode
             if (view.IsClosed)
             {
                 screenShakeAdornment.Cleanup(layer, view);
-                particlesAdornment.Cleanup(layer, view);
                 highlightAdornment.Cleanup(layer, view);
             }
-            //add highllight update as when the user crossled the highlight bugs out
+            //add highllight update as when the user moves the screen the highlight bugs out
         }
 
     }

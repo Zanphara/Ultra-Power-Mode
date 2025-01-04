@@ -25,6 +25,7 @@ namespace UltraPowerMode
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(UltraPowerModePackage.PackageGuidString)]
+    [ProvideMenuResource("Menus.ctmenu", 1)]
     public sealed class UltraPowerModePackage : AsyncPackage
     {
         /// <summary>
