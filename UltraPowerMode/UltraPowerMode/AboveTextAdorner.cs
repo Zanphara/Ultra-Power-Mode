@@ -41,11 +41,8 @@ namespace UltraPowerMode
         }
 
         private void View_Closed(object sender, EventArgs e)
-        {
-            if (view.IsClosed)
-            {
-                particlesAdornment.Cleanup(layer, view);
-            }
+        { 
+            particlesAdornment.Cleanup(layer, view);
         }
 
         private void TextBuffer_Changed(object sender, TextContentChangedEventArgs e)

@@ -28,7 +28,7 @@ namespace UltraPowerMode.Adornments
         {
             // Create the pen and brush to color the box behind the character
             // Bright white background with some transparency
-            this.brush = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)); 
+            this.brush = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255));
             this.brush.Freeze();
 
             // Create a rectangle that will serve as the highlight

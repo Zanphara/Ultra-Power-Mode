@@ -3,11 +3,11 @@ using Microsoft.VisualStudio.Text.Editor;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
+using UltraPowerMode.Enums;
 using UltraPowerMode.Utils;
 using Color = System.Drawing.Color;
 using Image = System.Windows.Controls.Image;
@@ -27,21 +27,23 @@ namespace UltraPowerMode.Adornments
     // the particles originate from where the caret originaly was
     internal class ParticlesAdornment : IAdornment
     {
-        private Color _particleColor;
-        private Color _hueColor;
-        private int _particleSize;
-        private int _huesize;
         private readonly List<Image> _particlesList;
+
+        private EditTag _editTag;
+        private Color _color;
+        private float _particleSize;
+        private int _spawnedAmount;
 
         public ParticlesAdornment()
         {
-            _particleColor = Color.FromArgb(255, 56, 252, 253);
+            _color = Color.FromArgb(155, 56, 252, 253);
             _particleSize = 3;
-
-            _hueColor = Color.FromArgb(255 / 2, 56, 252, 253);
-            _huesize = 6;
-
             _particlesList = new List<Image>();
+        }
+
+        public void AddAnimationToStoryboard()
+        {
+
         }
 
         public void CaretPositionChanged(IAdornmentLayer layer, IWpfTextView view, CaretPositionChangedEventArgs e)
@@ -54,61 +56,75 @@ namespace UltraPowerMode.Adornments
             layer.RemoveAllAdornments();
         }
 
-        public void CreateVisuals(IAdornmentLayer layer, IWpfTextView view, Point target, Point spawnLocation)
+        public void CreateVisuals(IAdornmentLayer layer, IWpfTextView view, Point target, Point spawnLocation, Storyboard storyboard)
         {
-            var particles = new Image();
-            particles.UpdateSource(GetParticleBitmap());
-            particles.Opacity = 1.0;
+            var particle = new Image();
 
-            layer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, particles, null);
+            particle.UpdateSource(GetParticleBitmap(_color, _particleSize));
+            particle.Opacity = 1.0;
 
-            var left = target.X;
-            var top = target.Y;
+             //Apply a glow effect to the particle
+            //var glowEffect = new DropShadowEffect
+            //{
+            //    Color = System.Windows.Media.Color.FromArgb(255, _color.R, _color.G, _color.B), // Use the particle's color for the glow
+            //    BlurRadius = 10, // Adjust the blur radius to control the glow intensity
+            //    ShadowDepth = 0, // Set to 0 to make the glow appear around the particle
+            //    Opacity = 0.8 // Adjust the opacity to control the glow's visibility
+            //};
+
+            //particle.Effect = glowEffect;
+
+            layer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, particle, null);
 
             double startAlpha = 1.0;
-            //double endAlpha = 0.0;
-            double alphaDecrements = 0.0001;
+            double alphaDecrements = 0.025;
             double frameInterval = 17.0;
 
             EasingFunctionBase easingFunction = new ExponentialEase()
             {
                 EasingMode = EasingMode.EaseOut,
-                Exponent = 2
+                Exponent = 4
             };
-
             Duration duration = CalculateDuration(startAlpha, alphaDecrements, frameInterval);
-            particles.BeginAnimation(Canvas.LeftProperty, GetAnimation(spawnLocation.X, left, duration, easingFunction));
-            particles.BeginAnimation(Canvas.TopProperty, GetAnimation(spawnLocation.Y, top, duration, easingFunction));
 
-            double initialSize = 1;
+            DoubleAnimation moveXAnimation = GetAnimation(spawnLocation.X, target.X, duration, easingFunction);
+            DoubleAnimation moveYAnimation = GetAnimation(spawnLocation.Y, target.Y, duration, easingFunction);
+
+            double initialSize = 3;
             double finalSize = 0;
 
             var sizeAnimation = GetAnimation(initialSize, finalSize, duration);
 
-            particles.BeginAnimation(Image.WidthProperty, sizeAnimation);
-            particles.BeginAnimation(Image.HeightProperty, sizeAnimation);
+            // Set the target and property for the animations
+            Storyboard.SetTarget(moveXAnimation, particle);
+            Storyboard.SetTargetProperty(moveXAnimation, new PropertyPath(Canvas.LeftProperty));
+
+            Storyboard.SetTarget(moveYAnimation, particle);
+            Storyboard.SetTargetProperty(moveYAnimation, new PropertyPath(Canvas.TopProperty));
+
+            // Add the animations to the Storyboard
+            storyboard.Children.Add(moveXAnimation);
+            storyboard.Children.Add(moveYAnimation);
+
+            // scaling animation for the width
+            Storyboard.SetTarget(sizeAnimation, particle);
+            Storyboard.SetTargetProperty(sizeAnimation, new PropertyPath(Image.WidthProperty));
+            storyboard.Children.Add(sizeAnimation);
+            // scaling animation for the height
+            Storyboard.SetTarget(sizeAnimation, particle);
+            Storyboard.SetTargetProperty(sizeAnimation, new PropertyPath(Image.HeightProperty));
+            storyboard.Children.Add(sizeAnimation);
 
             sizeAnimation.Completed += (sender, args) =>
             {
-                particles.Visibility = Visibility.Hidden;
-                layer.RemoveAdornment(particles);
-                _particlesList.Remove(particles);
+                particle.Visibility = Visibility.Hidden;
+                layer.RemoveAdornment(particle);
+                _particlesList.Remove(particle);
             };
-
-
-            //var opacityAnimation = GetAnimation(startAlpha, endAlpha, duration);
-            //opacityAnimation.Completed += (sender, args) =>
-            //{
-            //    particles.Visibility = Visibility.Hidden;
-            //    layer.RemoveAdornment(particles);
-            //    particlesList.Remove(particles);
-            //};
-            //particles.BeginAnimation(UIElement.OpacityProperty, opacityAnimation);
         }
-
         private Duration CalculateDuration(double initialValue, double decrementPerInterval, double intervalMilliseconds = 17)
         {
-            return  TimeSpan.FromMilliseconds(intervalMilliseconds * (initialValue / decrementPerInterval));
+            return TimeSpan.FromMilliseconds(intervalMilliseconds * (initialValue / decrementPerInterval));
         }
 
         private DoubleAnimation GetAnimation(double start, double end, Duration duration)
@@ -133,43 +149,39 @@ namespace UltraPowerMode.Adornments
             };
         }
 
-
-        private Bitmap GetParticleBitmap()
+        private Bitmap GetParticleBitmap(Color color, float size)
         {
-            Color particleColor = _particleColor;
-            Color hueColor = _hueColor;            
+            var particleColor = _color;
+            var particleSize = _particleSize;
+            Bitmap bitmap = new Bitmap(100, 100);
 
-            int particleSize = _particleSize;
-            int hueSize = _huesize;
-
-            var bitmap = new Bitmap(1, 1);
-
-            using (var g = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
+                //g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                // Create a gradient brush for a soft-edged particle
+                //var brush = new System.Drawing.Drawing2D.PathGradientBrush(new PointF[]
+                //{
+                //    new PointF(size / 2, size / 2),
+                //    new PointF(size, size),
+                //    new PointF(0, size),
+                //    new PointF(0, 0),
+                //    new PointF(size, 0)
+                //});
+                //{
+                //    CenterColor = Color.FromArgb(color.A, color.R, color.G, color.B),
+                //    SurroundColors = new Color[] { Color.Transparent }
+                //};
+
                 g.FillRectangle(
-                    new SolidBrush(particleColor),
-                    0, 0,
-                    particleSize, particleSize);
-
-                // Create the gradient brush for the hue
-                using (var path = new System.Drawing.Drawing2D.GraphicsPath())
-                {
-                    path.AddEllipse(0, 0, hueSize, hueSize);
-                    using (var gradientBrush = new System.Drawing.Drawing2D.PathGradientBrush(path))
-                    {
-                        gradientBrush.CenterColor = hueColor;
-                        gradientBrush.SurroundColors = new[] { hueColor };
-
-                        // Draw the gradient hue
-                        int offset = (hueSize) / 2;
-                        g.TranslateTransform(-offset, -offset); // Center the gradient
-                        g.FillEllipse(gradientBrush, 0, 0, hueSize, hueSize);
-                    }
-                }
+                    new SolidBrush(Color.FromArgb(
+                        particleColor.A, particleColor.R, particleColor.G, particleColor.B)),
+                        0, 0,
+                        particleSize, particleSize);
             }
+
             return bitmap;
         }
-
         public void OnSizeChanged(IAdornmentLayer layer, IWpfTextView view, int streakCount, bool backgroundColorChanged = false)
         {
             throw new NotImplementedException();
@@ -177,51 +189,72 @@ namespace UltraPowerMode.Adornments
 
         public void OnTextBufferChanged(IAdornmentLayer layer, IWpfTextView view, TextContentChangedEventArgs e)
         {
+            _particleSize = 100;
+
             if (e.EditTag == null)
             {
-                _particleColor = Color.FromArgb(255, 255, 252, 82);
-                _hueColor = Color.FromArgb(100, 228, 116, 24);
+                _editTag = EditTag.Delete;
+                _color = Color.FromArgb(255, 255, 252, 82);
             }
             else
             {
-                _particleColor = Color.FromArgb(255, 56, 252, 253);
-                _hueColor = Color.FromArgb(100, 56, 252, 253);
+                _editTag = EditTag.Insert;
+                _color = Color.FromArgb(255, 56, 252, 253);
             }
         }
 
         public void TextBufferPostChanged(IAdornmentLayer layer, IWpfTextView view, EventArgs e)
         {
-            var spawnedAmount = 10;
+            int spawnedAmount =  _spawnedAmount = 10;
 
             Random random = new Random();
+            Point target = new Point();
+            Point spawnLocation = new Point();
+
+            var offsetX = (8 / 2) - (3 / 2);
+            var offsetY = (view.Caret.Height / 2) - (3 / 2);
+
 
             for (int i = 0; i < spawnedAmount; i++)
             {
+                // (Visuals) need a more robust method of picking s random spawn and target
 
-                // Generate random offsets
-                int targetXOffset = random.Next(-8, 8);
-                int targetYOffset = random.Next(-6, 6);
+                Storyboard storyboard = new Storyboard();
 
-                Point target = new Point
-                (
-                    view.Caret.Left + targetXOffset + (8 / 2) - (3 / 2), 
-                    view.Caret.Top  + targetYOffset + (view.Caret.Height / 2) - (3 / 2)
-                );
+                if (_editTag == EditTag.Insert)
+                {
+                    target = new Point
+                    (
+                        view.Caret.Left + offsetX + random.Next(-8, 10),
+                        view.Caret.Top + offsetY + random.Next(-6, 6)
+                    );
 
+                    spawnLocation = new Point
+                    (
+                        view.Caret.Left + offsetX + random.Next(-6, 6),
+                        view.Caret.Top  + offsetY + random.Next(-6, 6)
+                    );
 
-                // Generate random offsets
-                int spawnXOffset = random.Next(-6, 6);
-                int spawnYOffset = random.Next(-6, 6);
+                    CreateVisuals(layer, view, target, spawnLocation, storyboard);
+                }
+                else if (_editTag == EditTag.Delete)
+                {
+                    target = new Point
+                    (
+                        view.Caret.Left + offsetX + random.Next(0, 16), // (WIP) needs to not move in the direction the caret is moving
+                        view.Caret.Top + offsetY + random.Next(-6, 6)
+                    );
 
+                    spawnLocation = new Point
+                    (
+                        view.Caret.Left + offsetX,
+                        view.Caret.Top + offsetY
+                    );
 
+                    CreateVisuals(layer, view, target, spawnLocation, storyboard);
+                }
 
-                Point spawnLocation = new Point
-                (
-                    target.X + spawnXOffset, 
-                    target.Y + spawnYOffset
-                );
-
-                CreateVisuals(layer, view, target, spawnLocation);
+                storyboard.Begin();
             }
         }
 
