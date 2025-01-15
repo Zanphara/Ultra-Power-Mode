@@ -59,20 +59,18 @@ namespace UltraPowerMode.Adornments
         public void CreateVisuals(IAdornmentLayer layer, IWpfTextView view, Point target, Point spawnLocation, Storyboard storyboard)
         {
             var particle = new Image();
-
             particle.UpdateSource(GetParticleBitmap(_color, _particleSize));
             particle.Opacity = 1.0;
 
-             //Apply a glow effect to the particle
-            //var glowEffect = new DropShadowEffect
-            //{
-            //    Color = System.Windows.Media.Color.FromArgb(255, _color.R, _color.G, _color.B), // Use the particle's color for the glow
-            //    BlurRadius = 10, // Adjust the blur radius to control the glow intensity
-            //    ShadowDepth = 0, // Set to 0 to make the glow appear around the particle
-            //    Opacity = 0.8 // Adjust the opacity to control the glow's visibility
-            //};
-
-            //particle.Effect = glowEffect;
+            // Apply a glow effect to the particle (consider using a ShaderEffect or batch rendering)
+            var glowEffect = new DropShadowEffect
+            {
+                Color = System.Windows.Media.Color.FromArgb(255, _color.R, _color.G, _color.B),
+                BlurRadius = 10,
+                ShadowDepth = 0,
+                Opacity = 0.8
+            };
+            particle.Effect = glowEffect;
 
             layer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative, null, null, particle, null);
 
@@ -95,22 +93,19 @@ namespace UltraPowerMode.Adornments
 
             var sizeAnimation = GetAnimation(initialSize, finalSize, duration);
 
-            // Set the target and property for the animations
             Storyboard.SetTarget(moveXAnimation, particle);
             Storyboard.SetTargetProperty(moveXAnimation, new PropertyPath(Canvas.LeftProperty));
 
             Storyboard.SetTarget(moveYAnimation, particle);
             Storyboard.SetTargetProperty(moveYAnimation, new PropertyPath(Canvas.TopProperty));
 
-            // Add the animations to the Storyboard
             storyboard.Children.Add(moveXAnimation);
             storyboard.Children.Add(moveYAnimation);
 
-            // scaling animation for the width
             Storyboard.SetTarget(sizeAnimation, particle);
             Storyboard.SetTargetProperty(sizeAnimation, new PropertyPath(Image.WidthProperty));
             storyboard.Children.Add(sizeAnimation);
-            // scaling animation for the height
+
             Storyboard.SetTarget(sizeAnimation, particle);
             Storyboard.SetTargetProperty(sizeAnimation, new PropertyPath(Image.HeightProperty));
             storyboard.Children.Add(sizeAnimation);
@@ -159,20 +154,6 @@ namespace UltraPowerMode.Adornments
             {
                 //g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-                // Create a gradient brush for a soft-edged particle
-                //var brush = new System.Drawing.Drawing2D.PathGradientBrush(new PointF[]
-                //{
-                //    new PointF(size / 2, size / 2),
-                //    new PointF(size, size),
-                //    new PointF(0, size),
-                //    new PointF(0, 0),
-                //    new PointF(size, 0)
-                //});
-                //{
-                //    CenterColor = Color.FromArgb(color.A, color.R, color.G, color.B),
-                //    SurroundColors = new Color[] { Color.Transparent }
-                //};
-
                 g.FillRectangle(
                     new SolidBrush(Color.FromArgb(
                         particleColor.A, particleColor.R, particleColor.G, particleColor.B)),
@@ -182,6 +163,7 @@ namespace UltraPowerMode.Adornments
 
             return bitmap;
         }
+
         public void OnSizeChanged(IAdornmentLayer layer, IWpfTextView view, int streakCount, bool backgroundColorChanged = false)
         {
             throw new NotImplementedException();

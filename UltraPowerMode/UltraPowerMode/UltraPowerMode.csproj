@@ -56,6 +56,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BelowTextAdorner.cs" />
     <Compile Include="BelowTextAdornerTextViewCreationListener.cs" />
+    <Compile Include="Shaders\GlowEffect.cs" />
     <Compile Include="UltraPowerModePackage.cs" />
     <Compile Include="Utils\ImageUtils.cs" />
   </ItemGroup>
